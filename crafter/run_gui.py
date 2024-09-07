@@ -108,7 +108,7 @@ def main():
           action = 'noop'
 
     # Environment step.
-    _, reward, done, _ = env.step(env.action_names.index(action))
+    _, reward, done, trunc, _ = env.step(env.action_names.index(action))
     duration += 1
 
     # Achievements.
@@ -126,7 +126,7 @@ def main():
       return_ += reward
 
     # Episode end.
-    if done and not was_done:
+    if (done or trunc) and not was_done:
       was_done = True
       print('Episode done!')
       print('Duration:', duration)

@@ -26,7 +26,7 @@ def main():
   for _ in range(args.episodes):
 
     start = time.time()
-    obs = env.reset()
+    obs, _ = env.reset()
     print('')
     print(f'Reset time: {1000*(time.time()-start):.2f}ms')
     print('Coal exist:    ', env._world.count('coal'))
@@ -34,10 +34,10 @@ def main():
     print('Diamonds exist:', env._world.count('diamond'))
 
     start = time.time()
-    done = False
-    while not done:
+    done = trunc = False
+    while not done and not trunc:
       action = random.randint(0, env.action_space.n)
-      obs, reward, done, info = env.step(action)
+      obs, reward, done, trunc, info = env.step(action)
     duration = time.time() - start
     step = env._step
     print(f'Step time: {1000*duration/step:.2f}ms ({int(step/duration)} FPS)')
