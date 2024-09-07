@@ -10,7 +10,7 @@ from . import worldgen
 
 # Gym is an optional dependency.
 try:
-  import gym
+  import gymnasium as gym
   DiscreteSpace = gym.spaces.Discrete
   BoxSpace = gym.spaces.Box
   DictSpace = gym.spaces.Dict
@@ -67,18 +67,26 @@ class Env(BaseClass):
   def action_names(self):
     return constants.actions
 
-  def reset(self):
+  def reset(self, options=None, seed=None):
     center = (self._world.area[0] // 2, self._world.area[1] // 2)
     self._episode += 1
     self._step = 0
-    self._world.reset(seed=hash((self._seed, self._episode)) % (2 ** 31 - 1))
+    self._world.reset(seed=seed or hash((self._seed, self._episode)) % (2 ** 31 - 1))
     self._update_time()
     self._player = objects.Player(self._world, center)
     self._last_health = self._player.health
     self._world.add(self._player)
     self._unlocked = set()
     worldgen.generate_world(self._world, self._player)
-    return self._obs()
+    info = {
+        'inventory': self._player.inventory.copy(),
+        'achievements': self._player.achievements.copy(),
+        'discount': 1,
+        'semantic': self._sem_view(),
+        'player_pos': self._player.pos,
+        'reward': 0,
+    }
+    return self._obs(), info
 
   def step(self, action):
     self._step += 1
@@ -104,7 +112,6 @@ class Env(BaseClass):
       reward += 1.0
     dead = self._player.health <= 0
     over = self._length and self._step >= self._length
-    done = dead or over
     info = {
         'inventory': self._player.inventory.copy(),
         'achievements': self._player.achievements.copy(),
@@ -115,7 +122,7 @@ class Env(BaseClass):
     }
     if not self._reward:
       reward = 0.0
-    return obs, reward, done, info
+    return obs, reward, dead, over, info
 
   def render(self, size=None):
     size = size or self._size
